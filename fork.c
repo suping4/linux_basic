@@ -5,7 +5,7 @@ static int g_var = 1;   //data 영역의 지역 변수
 char str[] = "PID";
 
 int main(){
-    int var;    //stack 영역의 지역 변수
+    int var;        //stack 영역의 지역 변수
     pid_t pid;
     var = 92;
 
