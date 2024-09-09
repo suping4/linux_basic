@@ -87,28 +87,29 @@ static void drawface(int fd, int start_x, int start_y, int end_x, int end_y, uby
 
 
 static void drawfacemmap(int fd, int start_x, int start_y, int end_x, int end_y, ubyte r, ubyte g, ubyte b) {
-    ubyte *pfb, a = 0xFF;
-    int bytes_per_pixel = vinfo.bits_per_pixel / 8;
+    unsigned short *pfb; // 16비트 색상을 위해 unsigned short 사용
+    int bytes_per_pixel = 2; // 16비트 색상은 2바이트
 
+    // 화면 크기 설정
     if(end_x == 0) end_x = vinfo.xres;
     if(end_y == 0) end_y = vinfo.yres;
 
-    pfb = (ubyte *)mmap(0, vinfo.xres * vinfo.yres * bytes_per_pixel, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    // 메모리 매핑
+    pfb = (unsigned short *)mmap(0, vinfo.xres * vinfo.yres * bytes_per_pixel, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
     for(int y = start_y; y < end_y; y++) {
         for(int x = start_x; x < end_x; x++) {
-            long location = (x + y * vinfo.xres) * bytes_per_pixel;
+            long location = (x + y * vinfo.xres);
             
-            // 색상 순서를 프레임버퍼의 형식에 맞게 조정
-            *(pfb + location + vinfo.red.offset / 8) = r;
-            *(pfb + location + vinfo.green.offset / 8) = g;
-            *(pfb + location + vinfo.blue.offset / 8) = b;
-            if(bytes_per_pixel == 4) {
-                *(pfb + location + vinfo.transp.offset / 8) = a;
-            }
+            // 16비트 색상 생성 (5비트 빨강, 6비트 초록, 5비트 파랑)
+            unsigned short color = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
+            
+            // 프레임버퍼에 색상 쓰기
+            *(pfb + location) = color;
         }
     }
 
+    // 메모리 매핑 해제
     munmap(pfb, vinfo.xres * vinfo.yres * bytes_per_pixel);
 }
 
