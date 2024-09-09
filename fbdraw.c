@@ -88,24 +88,28 @@ static void drawface(int fd, int start_x, int start_y, int end_x, int end_y, uby
 
 static void drawfacemmap(int fd, int start_x, int start_y, int end_x, int end_y, ubyte r, ubyte g, ubyte b) {
     ubyte *pfb, a = 0xFF;
-    int color = vinfo.bits_per_pixel/8.;
-
+    int bytes_per_pixel = vinfo.bits_per_pixel / 8;
 
     if(end_x == 0) end_x = vinfo.xres;
     if(end_y == 0) end_y = vinfo.yres;
 
-    pfb = (ubyte *)mmap(0, vinfo.xres * vinfo.yres * color, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    pfb = (ubyte *)mmap(0, vinfo.xres * vinfo.yres * bytes_per_pixel, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
-    for(int x = start_x; x < end_x*color; x+=color) {
-        for(int y = start_y; y<end_y; y++) {
-            *(pfb + (x+0) + y*vinfo.xres*color) = b;
-            *(pfb + (x+1) + y*vinfo.xres*color) = g;
-            *(pfb + (x+2) + y*vinfo.xres*color) = r;
-            *(pfb + (x+3) + y*vinfo.xres*color) = a;
+    for(int y = start_y; y < end_y; y++) {
+        for(int x = start_x; x < end_x; x++) {
+            long location = (x + y * vinfo.xres) * bytes_per_pixel;
+            
+            // 색상 순서를 프레임버퍼의 형식에 맞게 조정
+            *(pfb + location + vinfo.red.offset / 8) = r;
+            *(pfb + location + vinfo.green.offset / 8) = g;
+            *(pfb + location + vinfo.blue.offset / 8) = b;
+            if(bytes_per_pixel == 4) {
+                *(pfb + location + vinfo.transp.offset / 8) = a;
+            }
         }
     }
 
-    munmap(pfb, vinfo.xres * vinfo.yres * color);
+    munmap(pfb, vinfo.xres * vinfo.yres * bytes_per_pixel);
 }
 
 int main(int argc, char **argv) {
@@ -137,8 +141,22 @@ int main(int argc, char **argv) {
 
     drawcircle(fbfd, 200, 200, 100 ,255, 0, 255);
     
-//    drawface(fbfd, 0, 0, 0, 0, 128, 100, 65);
-    drawfacemmap(fbfd, 0, 0, 0, 0, 255, 100, 23);
+// 프랑스 국기 색상
+    ubyte blue_r = 0, blue_g = 0, blue_b = 255;   // 파란색
+    ubyte white_r = 255, white_g = 255, white_b = 255; // 흰색
+    ubyte red_r = 255, red_g = 0, red_b = 0;    // 빨간색
+
+    // 각 색상 영역의 너비 계산 (1600을 3으로 나눔)
+    int stripe_width = 1600 / 3;
+
+    // 파란색 영역 그리기
+    drawfacemmap(fbfd, 0, 0, stripe_width, 900, blue_r, blue_g, blue_b);
+
+    // 흰색 영역 그리기
+    drawfacemmap(fbfd, stripe_width, 0, stripe_width * 2, 900, white_r, white_g, white_b);
+
+    // 빨간색 영역 그리기
+    drawfacemmap(fbfd, stripe_width * 2, 0, 1600, 900, red_r, red_g, red_b);
     close(fbfd);
 
     return 0;
