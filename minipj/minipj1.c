@@ -22,7 +22,6 @@ void *musicPlay(void *arg) {
         pthread_mutex_lock(&mutex);
         if (isAlarm) {
             for (int i = 0; i < 3; i++) {
-                if(!isAlarm) break;
                 softToneWrite(SPKR, notes[i]);
                 delay(280);
             }
@@ -52,7 +51,7 @@ void *switchControl(void *arg) {
 
 void *cdsControl(void *arg) {
     while (running) {
-        if (digitalRead(CDS) == HIGH) {
+        if (digitalRead(CDS) == LOW) {
             digitalWrite(LED, LOW);
         } else {
             digitalWrite(LED, HIGH);
