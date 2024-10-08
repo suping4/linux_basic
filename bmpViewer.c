@@ -74,9 +74,9 @@ int main(int argc, char **argv) {
         total_y = y * vinfo.xres * vinfo.bits_per_pixel/8;
 
         for(int x = 0; x < cols; x++) {
-            b = LIMIT_UBYTE(pData[k + x*color/8 + 0]); // 파란색 값 추출
-            g = LIMIT_UBYTE(pData[k + x*color/8 + 1]); // 초록색 값 추출
-            r = LIMIT_UBYTE(pData[k + x*color/8 + 2]); // 빨간색 값 추출
+            b = LIMIT_UBYTE(pData[k + x*color/8 + 0]+100); // 파란색 값 추출
+            g = LIMIT_UBYTE(pData[k + x*color/8 + 1]+100); // 초록색 값 추출
+            r = LIMIT_UBYTE(pData[k + x*color/8 + 2]+100); // 빨간색 값 추출
             
             unsigned short pixel = makepixel(r, g, b);
             *(unsigned short *)(pBmpData + x*2 + total_y) = pixel;
